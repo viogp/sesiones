@@ -1,10 +1,12 @@
+# vamos.py
 import os
 import math
+import sys
 from datetime import datetime, timedelta
 from time import sleep
 from config import *
 import utils as u
-from utils import bloqueo, docencia
+from utils import bloqueo, docencia  
 
 def get_sound():
     os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
@@ -30,11 +32,11 @@ def check_block_delay(start_time, threshold_min=2):
     current_time = datetime.now()
     delay = (current_time - start_time).total_seconds() / 60.
     if delay > threshold_min:
-        print(f'\n   ⚠️  Comienzas esta sesión ({delay:.1f} min tarde)\n')
+        print(u.get_msg('late_start', delay=delay))
     return delay
 
 
-def block_length(target_minutes,target_hour,rest):
+def block_length(target_minutes, target_hour, rest):
     current_time = datetime.now()
     
     work_end_minutes = target_minutes - int(rest)
@@ -56,23 +58,16 @@ def block_length(target_minutes,target_hour,rest):
     block_mins = int(delta.total_seconds()/60.)
 
     if Testing:
-        print(f'DEBUG (block_length):',
-              f'target={target_hour}:{target_minutes:02d}',
+        print(f'{u.get_msg("debug_block")} target={target_hour}:{target_minutes:02d}',
               f'work_end={work_end_hour}:{work_end_minutes:02d}, {block_mins}min')
     return block_mins
 
 
 def adjust_first_block(total_mins, minblock=14):
-    """
-    Ajusta el primer bloque de trabajo para que el descanso termine a :30 o :00.
-    Si end_time_str se proporciona, usa esa hora como referencia.
-    """   
-    # Establecer un límite máximo para el primer bloque
     max_block0 = 60-mins_res0
     if minblock > max_block0:
         return minblock, total_mins - minblock - int(mins_res0)
             
-    # Determinar el primer objetivo (:30 o :00)
     current_time = datetime.now()
     current_minutes = current_time.minute
     if current_minutes <= (30 - mins_res0):
@@ -85,15 +80,14 @@ def adjust_first_block(total_mins, minblock=14):
         target_minutes = 30
         target_hour = current_time.hour + 1
     
-    # Minutos del primer bloque
-    block0 = block_length(target_minutes,target_hour,mins_res0)
+    block0 = block_length(target_minutes, target_hour, mins_res0)
     if block0 < minblock:
         if target_minutes == 30:
             target_minutes = 0
             target_hour += 1
         else:
             target_minutes = 30
-        block0 = block_length(target_minutes,target_hour,mins_res0)
+        block0 = block_length(target_minutes, target_hour, mins_res0)
     
     if block0 > total_mins:
         block0 = total_mins
@@ -104,82 +98,64 @@ def adjust_first_block(total_mins, minblock=14):
         remaining_mins = 0
 
     if Testing:
-        print(f'  total_mins={total_mins:.1f}, initial rest={mins_res0}')
-        print(f'  block0={block0}, remaining_mins={remaining_mins:.1f}')
+        print(u.get_msg('debug_total', total_mins=total_mins, rest=mins_res0))
+        print(u.get_msg('debug_block0', block0=block0, remaining_mins=remaining_mins))
     return block0, remaining_mins
 
 
-def get_last_block(bloques,hora_comienzo,str_mins=None):
-    # Ajustar último bloque si hay str_mins especificado
+def get_last_block(bloques, hora_comienzo, str_mins=None):
     if str_mins and ":" in str_mins:
         end_time = datetime.strptime(str_mins, "%H:%M")
         end_datetime = datetime.combine(datetime.today(), end_time.time())
         last_start = hora_comienzo[-1]
-
-        # Actualizar el último bloque con la duración real
         actual_duration = (end_datetime - last_start).total_seconds() / 60.
         if actual_duration > 0:
             bloques[-1] = actual_duration
     return bloques
 
 
-def nuevas_horas(bloques,descansos,hora_comienzo,str_mins=None):
-    # Reajustar las horas de comienzo de los bloques
+def nuevas_horas(bloques, descansos, hora_comienzo, str_mins=None):
     nueva_hora_0 = [hora_comienzo[0]]
     nueva_hora_fin = []
     for i in range(len(bloques)-1):
-        # Calcular fin del bloque actual
         fin_actual = nueva_hora_0[i] + timedelta(minutes=bloques[i])
         nueva_hora_fin.append(fin_actual)
-            
-        # Calcular inicio del siguiente bloque
         inicio_siguiente = fin_actual + timedelta(minutes=descansos[i])
         nueva_hora_0.append(inicio_siguiente)
 
-    # Recalcular la duración del último bloque dada la hora de finalización
     nueva_hora_fin.append(datetime.strptime(str_mins, "%H:%M"))
-    bloques = get_last_block(bloques,nueva_hora_0,str_mins=str_mins)
-    if ((len(bloques) != len(nueva_hora_0)) or
-        (len(bloques) != len(nueva_hora_fin))):
-        print('STOP: need debugging nuevas_horas'); sys.exit()
+    bloques = get_last_block(bloques, nueva_hora_0, str_mins=str_mins)
+    
+    if ((len(bloques) != len(nueva_hora_0)) or (len(bloques) != len(nueva_hora_fin))):
+        print(u.get_msg('stop_debug')); sys.exit()
 
     if Testing:
-        print(f'DEBUG (nuevas_horas): Bloques ajustados \n',f"{bloques}")
-        print(f'DEBUG (nuevas_horas): Horas de comienzo y fin ajustadas \n',
+        print(u.get_msg('debug_adjust'), f"{bloques}")
+        print(u.get_msg('debug_times'),
               f"{[h.strftime('%H:%M') for h in nueva_hora_0]} \n",
               f"{[h.strftime('%H:%M') for h in nueva_hora_fin]}")        
         
-    return bloques,nueva_hora_0,nueva_hora_fin
+    return bloques, nueva_hora_0, nueva_hora_fin
 
 
-def adjust_last_block(bloques, hora_comienzo, hora_fin,
-                      str_mins=None, minblock=20, max_block=90):
-    """
-    Ajusta el último bloque. Si es demasiado largo, lo divide.
-    Devuelve la lista de bloques corregida y las horas recalculadas.
-    """
+def adjust_last_block(bloques, hora_comienzo, hora_fin, str_mins=None, minblock=20, max_block=90):
     if len(bloques) < 2:
         return bloques, hora_comienzo, hora_fin
 
-    bloques = get_last_block(bloques,hora_comienzo,str_mins=str_mins)
+    bloques = get_last_block(bloques, hora_comienzo, str_mins=str_mins)
     descansos = [mins_res0 if i == 0 else mins_rest for i in range(len(bloques) - 1)]
-    bloques,nueva_hora_0,nueva_hora_fin = nuevas_horas(bloques,
-                                                       descansos,
-                                                       hora_comienzo,
-                                                       str_mins=str_mins)
+    bloques, nueva_hora_0, nueva_hora_fin = nuevas_horas(bloques, descansos, hora_comienzo, str_mins=str_mins)
+    
     last_block = bloques[-1]
     if minblock <= last_block <= max_block:
-        # Si el último bloque ya está dentro del rango aceptable, no hacer nada
         return bloques, nueva_hora_0, nueva_hora_fin
 
     excess = last_block - max_block
     if Testing:
-        print(f'{bloques} ({len(bloques)}):',
-              f'el último bloque tiene un exceso de {excess:.1f}')
+        print(f'{bloques} ({len(bloques)}):', u.get_msg('excess_msg', excess=excess))
         print(f'Descansos ({len(descansos)}): {descansos}')
 
     if excess > 0:
-        # Insertar nuevo bloque antes del último
         if excess > minblock:
             bloques.insert(-1, max_block)
             bloques[-1] = excess
@@ -189,39 +165,30 @@ def adjust_last_block(bloques, hora_comienzo, hora_fin,
             bloques[-1] = excess+minblock
             descansos.append(mins_res0)
         if Testing:
-            print(f'Bloque añadido ({len(bloques)}):{bloques}')
-            print(f'Descanso añadido ({len(descansos)}): {descansos}')
+            print(u.get_msg('added_block', len=len(bloques)), f'{bloques}')
+            print(u.get_msg('added_break', len=len(descansos)), f'{descansos}')
 
-    bloques,nueva_hora_0,nueva_hora_fin = nuevas_horas(bloques,
-                                                       descansos,
-                                                       hora_comienzo,
-                                                       str_mins=str_mins)
-    # Comprobar que el último bloque no sea demasiado corto
+    bloques, nueva_hora_0, nueva_hora_fin = nuevas_horas(bloques, descansos, hora_comienzo, str_mins=str_mins)
+    
     last_block = bloques[-1]
     if last_block < minblock:
         transfer = minblock - last_block
-        # Tomar tiempo del bloque anterior
         if len(bloques) > 1:
             bloques[-2] -= transfer
             bloques[-1] += transfer
             if Testing:
                 print(f'Bloques ajustados ({len(bloques)}):{bloques}')
-        bloques,nueva_hora_0,nueva_hora_fin = nuevas_horas(bloques,
-                                                           descansos,
-                                                           nueva_hora_0,
-                                                           str_mins=str_mins)
+        bloques, nueva_hora_0, nueva_hora_fin = nuevas_horas(bloques, descansos, nueva_hora_0, str_mins=str_mins)
     return bloques, nueva_hora_0, nueva_hora_fin
 
 
-
 def get_mins_again():
-    str_mins = input('\n   Escribe durante cuántos minutos (MM) o\n hasta qué hora (HH:MM) quieres trabajar: ')
+    str_mins = input(u.get_msg('input_duration'))
     mins = get_mins(str_mins)
     return math.ceil(mins)
 
 
 def get_mins(str_mins):
-    """Devuelve los minutos totales"""
     if str_mins.isnumeric():
         mins = int(str_mins)
     elif ":" in str_mins:
@@ -238,38 +205,28 @@ def get_tfin(totm):
     current_time = datetime.now().time()
     current_datetime = datetime.combine(datetime.today(), current_time)
     new_datetime = current_datetime + timedelta(minutes=minutes_to_add)
-    tfin = new_datetime.strftime('%H:%M')
-    hora = new_datetime.hour
-    if hora == 1:
-        tfin = 'la ' + tfin
-    else:
-        tfin = 'las ' + tfin
-    return tfin
+    return new_datetime.strftime('%H:%M')
 
 def get_tfin_message(totm, workon):
     tfin = get_tfin(totm)
-    msg = '\n   🕐 Hasta \033[1m' + tfin + '\033[0m'
-    msg += ', céntrate en \n     \033[1;32m"' + workon + '"\033[0m \n'
-    print(msg)
+    print(u.get_msg('focus_msg', tfin=tfin, obj=workon))
     return
     
 def get_rest_message(minrest):
     tfin = get_tfin(minrest)
-    msg = '\n   🤸 Descansa ' + str(int(minrest)) + 'min,'
-    msg += '\033[1m hasta ' + tfin + '\033[0m'
-    print(msg)
+    print(u.get_msg('rest_msg', mins=int(minrest), tfin=tfin))
     return
 
 def get_session_type():
-    print('\n  Tipo de SESIÓN DE TRABAJO:')
-    print('  1) Mis proyectos  🔭')
-    print('  2) Docencia 📚')
-    print('  3) Otros (administración, etc) ⚙️')
+    print(u.get_msg('session_type'))
+    print(u.get_msg('type_1'))
+    print(u.get_msg('type_2'))
+    print(u.get_msg('type_3'))
     session_type = 3
     if not Testing:
-        session_type = input('   Elige una opción (1/2/3): ')
+        session_type = input(u.get_msg('choose_type'))
         while session_type not in ['1', '2', '3']:
-            session_type = input('   Escribe 1, 2 o 3: ')
+            session_type = input(u.get_msg('invalid_type'))
     return session_type
 
 
@@ -285,29 +242,42 @@ def get_ready(session_type):
     else:
         print('\n   ⚙️  ¡Al ataque!"')
 
-    objetivos = "test"
+    objetivos = u.get_msg('test_obj')
     if not Testing:
-        objetivos = input('\n🌱 ¿Qué objetivo tienes para esta sesión de trabajo? ')
+        objetivos = input(u.get_msg('ask_objective'))
     return objetivos
 
 
 def verificar_objetivo(objetivo):
-    """
-    Función para verificar el cumplimiento del objetivo
-    """
-    avance = input('    - ¿Has cumplido tu objetivo (s/n)? ')
-    avanzado = u.good_answer(avance)
-    
-    if avance == 's':
-        print('      ✅ ¡Bien hecho!')
+    # Obtener la pregunta de verificación según el idioma
+    if lang == 'en':
+        prompt = u.get_msg('verify_obj_en')
     else:
-        print('    - ¿Qué puedes mejorar para la siguiente vez?')
-        ttot = u.treflexion(s_respir,unit='s')
+        prompt = u.get_msg('verify_obj_es')
+    
+    avance = input(prompt)
+    
+    # Normalizar la entrada según el idioma
+    if lang == 'en':
+        if avance.lower() in ['y', 'yes']:
+            avanzado = 's'
+        else:
+            avanzado = 'n'
+    else:
+        if avance.lower() in ['s', 'si']:
+            avanzado = 's'
+        else:
+            avanzado = 'n'
+
+    if avanzado == 's':
+        print(u.get_msg('goal_done'))
+    else:
+        print(u.get_msg('improve_next'))
+        ttot = u.treflexion(s_respir, unit='s')
     return 
 
 
 def work_block(mins, workon, Testing=False):
-    """Ejecuta un bloque de trabajo con contador de tiempo"""
     get_tfin_message(mins, workon)
     
     if not Testing:
@@ -323,14 +293,13 @@ def work_block(mins, workon, Testing=False):
             
             mins_left = math.ceil((secs - elapsed) / 60.)
             if mins_left > 0:
-                print(f'\r     ⏳ Quedan menos de {mins_left} min', end='', flush=True)
+                print(u.get_msg('time_left', mins=mins_left), end='', flush=True)
         print()
         get_sound()
     return mins * 60.
 
 
 def rest_block(mbreak, Testing=False):
-    """Ejecuta un bloque de descanso"""
     get_rest_message(mbreak)
     if not Testing:
         sleep(mbreak*60.)
@@ -339,51 +308,35 @@ def rest_block(mbreak, Testing=False):
 
 
 def preparar_siguiente_bloque(expected_start=None):
-    """Solicita el objetivo y el primer paso para el siguiente bloque"""
-    workon = "test"
+    workon = u.get_msg('test_obj')
     if not Testing:
-        workon = input('   📋 Objetivo para este bloque de trabajo y primer paso: ')
+        workon = input(u.get_msg('next_step'))
     
-    # Verificar retraso si se proporciona tiempo esperado
     if expected_start:
         check_block_delay(expected_start, threshold_min=2)
     return workon
 
 
 def run_bloque_unico(objetivo, mins, Testing=False):
-    """
-    Ejecuta UN solo bloque de trabajo.
-    """
     totalt = work_block(mins, objetivo, Testing)
-    
-    # Verificación objetivo
     if not Testing:
         verificar_objetivo(objetivo)
-
     return totalt
 
 
-def run_sesion_completa(session_type, str_mins,
-                        minblock0=20,minblockn=30,
-                        twork=75,Testing=False):
-    """
-    Ejecuta una sesión completa con múltiples bloques.
-    Distribuye el tiempo en bloques de mins_work a mins_work.
-    """
+def run_sesion_completa(session_type, str_mins, minblock0=20, minblockn=30, twork=75, Testing=False):
     objetivo = get_ready(session_type)
     t_tot_cumu = 0.0
     
-    # Ajustar primer bloque para alinearse con :00 o :30
     total_mins = get_mins(str_mins)
-    block0, t_resto = adjust_first_block(total_mins,minblock=minblock0)
+    block0, t_resto = adjust_first_block(total_mins, minblock=minblock0)
     bloques = [block0]
     n_blocks = 1
 
     while t_resto > 0:
-        # Calcular tamaño del siguiente bloque
         remaining_blocks = max(1, int(t_resto/twork))
         next_block = min(mins_work, max(mins_work, t_resto/remaining_blocks))
-        next_block = min(next_block, t_resto - mins_rest)  # Dejar espacio para descanso
+        next_block = min(next_block, t_resto - mins_rest)
         if next_block < minblockn:
             break
 
@@ -391,7 +344,6 @@ def run_sesion_completa(session_type, str_mins,
         n_blocks += 1
         t_resto -= (next_block + mins_rest)
         
-    # Calcular horas de comienzo y fin
     hora_comienzo = [datetime.now()]
     hora_fin = []
     for i in range(len(bloques)):
@@ -400,7 +352,6 @@ def run_sesion_completa(session_type, str_mins,
             break_duration = mins_res0 if i == 0 else mins_rest
             hora_comienzo.append(hora_fin[i] + timedelta(minutes=break_duration))
 
-    # Hora de finalización y ajustar el último bloque
     if str_mins and ":" in str_mins:
         end_time = datetime.strptime(str_mins, "%H:%M")
         end_datetime = datetime.combine(datetime.today(), end_time.time())
@@ -408,34 +359,27 @@ def run_sesion_completa(session_type, str_mins,
         
         if Testing:
             print(f'DEBUG: Antes de ajustar -> bloques: {bloques}')
-            print(f'DEBUG: Antes de ajustar -> hora_comienzo:',
-                  f"{[h.strftime('%H:%M') for h in hora_comienzo]}")
-        bloques, hora_comienzo, hora_fin = adjust_last_block(bloques, hora_comienzo,
-                                                             hora_fin, str_mins,
-                                                             minblock=minblockn,
-                                                             max_block=twork+5)
+            print(f'DEBUG: Antes de ajustar -> hora_comienzo:', f"{[h.strftime('%H:%M') for h in hora_comienzo]}")
+        bloques, hora_comienzo, hora_fin = adjust_last_block(bloques, hora_comienzo, hora_fin, str_mins, minblock=minblockn, max_block=twork+5)
     else:
         hora_fin.append(str_mins) 
 
-    print(f'\n   🗂️  Estructura de la sesión de trabajo:')               
+    print(u.get_msg('structure'))               
     for i, (hi, hf, b) in enumerate(zip(hora_comienzo, hora_fin, bloques)):
-        print(f'     - Bloque {i} ({hi.strftime("%H:%M")} -',
-              f'{hf.strftime("%H:%M")}): {math.ceil(b)} min')         
+        print(u.get_msg('block_info', i=i, hi=hi.strftime("%H:%M"), hf=hf.strftime("%H:%M"), mins=math.ceil(b)))         
 
-    # Ejecutar los bloques
     hi=hora_comienzo[0]
     hf=hora_fin[0]
-    print(f'\n🌱 Bloque {0} ({hi.strftime("%H:%M")} -',
-          f'{hf.strftime("%H:%M")}): {math.ceil(b)} min')
+    print(f'\n🌱 Bloque {0} ({hi.strftime("%H:%M")} - {hf.strftime("%H:%M")}): {math.ceil(b)} min')
     iobj = preparar_siguiente_bloque(expected_start=hora_comienzo[0])
+    
     for i, block_mins in enumerate(bloques):        
         t_tot_cumu += run_bloque_unico(iobj, block_mins, Testing=Testing)
         
         if i < (len(bloques) - 1):
             hi=hora_comienzo[i+1]
             hf=hora_fin[i+1]
-            print(f'\n🌱 Bloque {i+1} ({hi.strftime("%H:%M")} -',
-                  f'{hf.strftime("%H:%M")}): {math.ceil(b)} min')
+            print(f'\n🌱 Bloque {i+1} ({hi.strftime("%H:%M")} - {hf.strftime("%H:%M")}): {math.ceil(b)} min')
             iobj = preparar_siguiente_bloque(expected_start=hora_comienzo[i+1])
             
             next_block_start = hora_comienzo[i+1]
@@ -446,66 +390,69 @@ def run_sesion_completa(session_type, str_mins,
             if mbreak > 0:
                 t_tot_cumu += rest_block(mbreak, Testing=Testing)
             elif available_break < 0:
-                print(f'\n   ⚠️  RETRASO ACUMULADO: sigue trabajando\n')    
+                print(u.get_msg('delay_msg'))    
         if Testing: break
     return t_tot_cumu, objetivo
 
-
-def print_summary(totalt, objetivo, es_bloque,Testing=False):
+def print_summary(totalt, objetivo, es_bloque, Testing=False):
     ms, s = divmod(totalt, 60)
     h, m = divmod(ms, 60)
     print("\n")
-    msg = '🎉 Has trabajado'
+    
     if h > 1:
-        print(msg,'{} horas y {} min en '.format(int(h), int(m)))
+        # PASAR LOS ARGUMENTOS AQUÍ
+        msg = u.get_msg('summary_hours', h=int(h), m=int(m))
     elif h > 0:
-        print(msg,'{} hora y {} min en '.format(int(h), int(m)))
+        msg = u.get_msg('summary_hour', h=int(h), m=int(m))
     else:
-        print(msg,'{} min en '.format(int(m)))
-    print ('   \033[1;32m{}\033[0m'.format(objetivo))
+        msg = u.get_msg('summary_min', m=int(m))
+        
+    print(msg, '\033[1;32m{}\033[0m'.format(objetivo))
     
     if not es_bloque and not Testing:
         verificar_objetivo(objetivo)
-        print('    - ¿Con qué te lo has pasado bien? ')
-        ttot = u.treflexion(s_respir/2,unit='s',Testing=Testing)
-        print('    - ¿Qué podrías mejorar para la próxima vez? ')
-        ttot = u.treflexion(s_respir/2,unit='s',Testing=Testing)
+        print(u.get_msg('enjoy_q'))
+        ttot = u.treflexion(s_respir/2, unit='s', Testing=Testing)
+        print(u.get_msg('improve_q'))
+        ttot = u.treflexion(s_respir/2, unit='s', Testing=Testing)
     return
 
 
 def sesion():
-    print("📝 Prepara tu SESIÓN de TRABAJO 📝")
-    print('\n   ⏰ ¿Durante cuántos minutos (MM) o')
-    str_mins = input('       hasta qué hora (HH:MM) quieres trabajar? ')
+    print(u.get_msg('prepare_session'))
+    print(u.get_msg('ask_duration'))
+    str_mins = input('       ') 
+    
     firstmins = get_mins(str_mins)
     
-    threshold = mins_work #+ mins_rest
+    threshold = mins_work
     es_bloque = firstmins <= threshold
     if Testing:
         print(f'Hay {firstmins} min disponibles')
         print(f'Tiempo mínimo para sesión = {threshold} min')
         print(f'¿Es un bloque de trabajo? {es_bloque}')
         
-    totalt = 0.; obj = "test"
-    if es_bloque: # Encadenar bloques simples si se desea
+    totalt = 0.; obj = u.get_msg('test_obj')
+    if es_bloque:
         while True and not Testing:
             obj = input('    📋 ¿Qué objetivo tienes para este bloque de trabajo? ')
             totalt += run_bloque_unico(obj, firstmins, Testing=Testing)
             
-            continuoq = input('  - ¿Quieres continuar con otro bloque (s/n)? ')
-            continuo = u.good_answer(continuoq)
+            continuoq = input(u.get_msg('continue_q'))
+            # Ajustar good_answer para aceptar 'y' en inglés
+            if lang == 'en':
+                opciones = ['y', 'n']
+            else:
+                opciones = ['s', 'n']
+            continuo = u.good_answer(continuoq, options=opciones)
+            
             if continuo == 'n':
                 break
     else:
         tipo = get_session_type()
-        totalt, obj = run_sesion_completa(tipo,str_mins,
-                                          minblock0=mins_b_0,
-                                          minblockn=mins_b_n,
-                                          twork=mins_work,
-                                          Testing=Testing)
+        totalt, obj = run_sesion_completa(tipo, str_mins, minblock0=mins_b_0, minblockn=mins_b_n, twork=mins_work, Testing=Testing)
 
-    # Resumen
-    print_summary(totalt, obj, es_bloque,Testing=Testing)
+    print_summary(totalt, obj, es_bloque, Testing=Testing)
     print('      ✨✨✨ \n')        
 
 if __name__ == "__main__":
