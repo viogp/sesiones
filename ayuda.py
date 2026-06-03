@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import time
 from config import *
 import utils as u
-from utils import bloqueo, docencia
 
 tt = min_refl
 t2 = tt*2.
@@ -143,14 +142,14 @@ def life_wheel():
 def get_moretime(frase,Testing=False):
     ttot = 0
     pasoq = input('  - ¿Tienes claro cómo dar ahora un pasito hacia lo que te importa (s/n)?\n')
-    paso = u.good_answer(pasoq)
+    paso = u.get_sn(pasoq)
     
     if paso == 'n':
         get_response(trocea,frase)
         ttot += u.treflexion(tt,Testing=Testing)
         
         claroq = input('    ¿Lo tienes claro ahora (s/n)? ')
-        claro = u.good_answer(claroq)
+        claro = u.get_sn(claroq)
         if paso == 'n':
             get_response(paliativo, frase)
             exit()
@@ -179,7 +178,7 @@ def transicion(Testing=False):
 
     print('\n  - La investigación es profunda y abierta; la docencia es social estructurada y con plazos.\n')
     diq = input('    - ¿Quieres transitar hacia la investigación? (s/n)')
-    di = u.good_answer(diq)
+    di = u.get_sn(diq)
     if di == 's':
         print('\n   🔭 Hacia la investigación\n')
         print('\n      ✨✨✨ Mi PGL: ' + mipgl)
@@ -203,7 +202,8 @@ def transicion(Testing=False):
         print('        - 14:30 a 18:00 (30min+75min+75min) y un rato de correo')
         ttot = u.treflexion(s_respir/2,unit='s',Testing=Testing)
     else:
-        print('\n   📚 Hacia la docencia ',docencia)
+        print('\n   📚 Hacia la docencia ')
+        print(u.get_msg('docencia'))
         ttot = u.treflexion(s_respir/2,unit='s',Testing=Testing)
         print('\n      Recaba información sobre las asignaturas:')
         print('        - Ficheros de información en el ordenador:')
@@ -239,8 +239,8 @@ def refl_past(personal=False,Testing=False):
     print('  ✨ ¿Cómo ha ido el último periodo?')
     print('     ¿Qué has conseguido? ¡Celébralo!')
     print('     ¿Qué ha fallado? Contesta con compasión\n')
-    if not Testing and not personal:
-        os.system("emacs " + path2metas + " &")
+    if not Testing and not personal and info_projects:
+        os.system(path2metas)
     ttot = u.treflexion(tt,Testing=Testing)
     return ttot
 
@@ -305,7 +305,7 @@ def revision_semanal(Testing=False):
     ttot += u.treflexion(t_half,Testing=Testing)
     planq = input('  📋 ¿Necesitas planear un nuevo sprint (s/n)?')
     print(' ')
-    plana = u.good_answer(planq)
+    plana = u.get_sn(planq)
     if plana == 's':
         sprint(plan=True,Testing=Testing)
     else:
@@ -443,7 +443,7 @@ def ayuda_general(Testing=True):
     
     if frase == 1:
         motivate(tt,Testing=Testing)
-        print(bloqueo)
+        print(u.get_msg('bloqueo'))
         ttot = u.treflexion(s_respir,unit='s',Testing=Testing)
         print("\n ¿Cómo es la tarea a la que te enfrentas? \n")
         print("   1. Difícil. \n")
@@ -480,20 +480,20 @@ def ayuda_general(Testing=True):
     
     elif frase == 3:
         tarde1 = input("¿Es por la mañana o justo después de comer (s/n)?")
-        tarde = u.good_answer(tarde1)
+        tarde = u.get_sn(tarde1)
         if tarde == 's':
             message = ('Tómate un café. \n')
             get_response(message, frase)
         else:
             descanso1 = input("¿Puedes descansar al menos 5min (s/n)?")
-            descanso = u.good_answer(descanso1)
+            descanso = u.get_sn(descanso1)
             if descanso == 's':
                 message = ('Tómate un descanso activo de al menos 5min:\n'
                            'Camina, baila, muévete. \n')
                 get_response(message, frase)
             else:
                 reunion1 = input("¿Tienes una reunión pronto (s/n)?")
-                reunion = u.good_answer(reunion1)
+                reunion = u.get_sn(reunion1)
                 if reunion == 's':
                     message = ('Si puedes, atiende la reunión o\n'
                                'de pie o\n'
@@ -505,7 +505,7 @@ def ayuda_general(Testing=True):
     
     elif frase == 4:
         tarde1 = input("¿Puedes designar un tiempo más tarde para analizar lo que te preocupa (s/n)?")
-        tarde = u.good_answer(tarde1)
+        tarde = u.get_sn(tarde1)
         if tarde == 's':
             message = ('Agenda cuándo vas a darle vueltas al asunto. \n')
             get_response(message, frase)
@@ -514,7 +514,7 @@ def ayuda_general(Testing=True):
     
     elif frase == 5:
         tarde1 = input("¿Más tarde de 1h (s/n)?")
-        tarde = u.good_answer(tarde1)
+        tarde = u.get_sn(tarde1)
         if tarde == 's':
             message = ('Dedica unos 15min a planear cómo recuperar el tiempo '
                        'durante los próximos 5 días de trabajo. \n'
@@ -523,14 +523,14 @@ def ayuda_general(Testing=True):
             get_response(message, frase)
         else:
             fregar1 = input("¿Te basta con reducir el descanso de la comida para recuperar? (s/n)")
-            fregar = u.good_answer(fregar1)
+            fregar = u.get_sn(fregar1)
             if fregar == 's':
                 message = ('Recupera dejando de recoger o reduciendo '
                            'de otro modo el descanso de la comida. \n')
                 get_response(message, frase)
             else:
                 dia1 = input('¿Podrías recuperar el tiempo al final del día? (s/n)')
-                dia = u.good_answer(dia1)
+                dia = u.get_sn(dia1)
                 if dia == 's':
                     message = ('Recupera quedándote un rato más hoy.\n' +
                                'Decide hasta cuándo y escríbelo. \n')
@@ -553,7 +553,7 @@ def ritual_ayuda(tipo, Testing=False):
         revision_semanal(Testing=Testing)
     elif tipo == '4':
         personalq = input('    - ¿Quieres hacer una revisión personal? (s/n)')
-        personal = u.good_answer(personalq)
+        personal = u.get_sn(personalq)
         if personal == 's':
             revision_trimestral_personal(Testing=Testing)
         else:
