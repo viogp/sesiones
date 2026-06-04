@@ -1,4 +1,4 @@
-Testing = False
+Testing = True
 lang = 'es' # Either 'en' for English or 'es' for Spainish
 
 # Sentence on your big and crazy project

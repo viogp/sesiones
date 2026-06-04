@@ -17,6 +17,7 @@ MESSAGES = {
         'type_3': "  3) Otros (administración, etc) ⚙️",
         'choose_type': '   Elige una opción (1/2/3): ',
         'invalid_type': '   Escribe 1, 2 o 3: ',
+        'ask_complete':'    - ¿Has cumplido tu objetivo (s/n)? ',
         'ask_objective': '\n🌱 ¿Qué objetivo tienes para esta sesión de trabajo? ',
         'next_step': '   📋 Objetivo para este bloque de trabajo y primer paso: ',
         'late_start': '\n   ⚠️  Comienzas esta sesión ({delay:.1f} min tarde)\n',
@@ -86,24 +87,22 @@ def get_msg(key, **kwargs):
 
 def good_answer(answer, options=['s','n','y']):
     isgood = False
+    answ = answer.lower()[0]
     while not isgood:
-        if answer in options:
+        if answ in options:
             isgood = True
         else:
-            print(get_msg('bad_input'))
-            answer = input('')
-    return answer
+            answer = input(print(get_msg('bad_input')))
+            answ = answer.lower()[0]
+    return answ
 
 
 def get_sn(answer):
     answ = good_answer(answer)
 
     sn = 'n'
-    if lang == 'es' and answ.lower() is 's':
+    if answ=='s' or answ=='y':
         sn = 's'
-    elif lang == 'en' and answ.lower() is 'y':
-        sn = 's'
-
     return sn
 
 

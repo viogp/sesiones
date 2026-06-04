@@ -287,13 +287,13 @@ def get_ready(session_type):
     return objetivos
 
 
-def verificar_objetivo(objetivo):
+def verificar_objetivo(objetivo,Testing=False):
     """
     Función para verificar el cumplimiento del objetivo
     """
-    prompt = input(u.get_msg('ask_objective'))
-    avance = input(prompt)
-    
+    avance = 's'
+    if not Testing:
+        avance = input(u.get_msg('goal_check'))
     avanzado = u.get_sn(avance)
 
     if avanzado == 's':
@@ -353,9 +353,8 @@ def run_bloque_unico(objetivo, mins, Testing=False):
     """
     totalt = work_block(mins, objetivo, Testing)
     
-    # Verificación objetivo
-    if not Testing:
-        verificar_objetivo(objetivo)
+    # Comprobar si se ha cumplido el objetivo
+    verificar_objetivo(objetivo, Testing=Testing)
 
     return totalt
 
