@@ -1,10 +1,12 @@
-Testing = True
+Testing = False
 lang = 'es' # Either 'en' for English or 'es' for Spainish
 
 # Sentence on your big and crazy project
 mipgl = 'Pensar a lo grande, sacar el artículo de las líneas, escribir el capítulo de SAMs'
 
 # Set up for scheduling work sessions (vamos.py)
+# First block, including the break, goes up to either :00 or :30
+# The work session will finilise at the provided time in the command line
 short_rest = False
 
 mins_work = 75.  # Minutes per work block
@@ -16,7 +18,8 @@ if short_rest:
     mins_rest = 10.  # Minutes to rest 
     mins_res0 =  7.  # First rest
 
-# Set up for reflect and planning (ayuda.py)    
+# Set up for reflect and planning (ayuda.py)
+# Only in Spanish
 min_refl  =  3.  # Minutes to reflect
 s_respir  =  5.  # Seconds to breath
 
