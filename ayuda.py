@@ -59,10 +59,11 @@ def get_type():
     print('  1) General')
     print('  2) Comenzar el día (~1 min)')
     print('  3) Revisión semanal (~10 min)')
-    print('  4) Revisión trimestral (~40 min)')
-    print('  5) Revisión anual (~1 h)')
-    print('  6) Transición (~ 10 min)')
-    ntipos = 6
+    print('  4) Nuevo periodo para avanzar el proyecto (~10 min)')
+    print('  5) Transición (~ 10 min)')
+    print('  6) Revisión trimestral (~40 min)')
+    print('  7) Revisión anual (~1 h)')
+    ntipos = 7
     tipo = input('\n   Elige una opción del 1 al '+str(ntipos)+': ')
     itipo = int(tipo)
     while itipo not in range(ntipos+1):
@@ -165,7 +166,8 @@ def motivate(tt,Testing=False):
 
 
 def fin_revision(ttot,Testing=False):
-    print(f'  ⏳ Has terminado esta revisión en unos {ttot:.0f} min')
+    mins = ttot/60.
+    print(f'  ⏳ Has terminado esta revisión en unos {mins:.0f} min')
     print(lanza_vamos)
     print('     ✨✨✨ ')
     return
@@ -273,13 +275,13 @@ def objetivos(anual=False,Testing=Testing):
 def sprint(plan=False,Testing=False):
     ttot = 0
     if plan:
-        print('  🤔 Reflexiona sobre el último sprint:\n')
+        print('  🤔 Reflexiona sobre el último empujón al proyecto:\n')
         print('     ¿Qué has conseguido?\n')
         print('     ¿Qué ha funcionado?\n')
         print('     ¿Qué puedes mejorar para el siguiente?\n')
-        ttot += u.treflexion(t2,Testing=Testing)
+        ttot += u.treflexion(tt,Testing=Testing)
 
-        print('  📅 Planea el sprint:\n')
+        print('  📅 Planea un nuevo periodo para avanzar el proyecto:\n')
         print('     ¿En qué vas a trabajar y durante qué días?\n')
         print('     ¿Cuál es el objetivo mínimo, si hay problemas?\n')
         print('     ¿Cuál es el objetivo ideal, si todo va bien?\n')
@@ -310,6 +312,19 @@ def revision_semanal(Testing=False):
         sprint(plan=True,Testing=Testing)
     else:
         sprint(Testing=Testing)
+
+    if not Testing:
+        ttot = time.time() - start_time
+    fin_revision(ttot,Testing=Testing)
+    return ttot
+
+
+def revision_sprint(Testing=False):
+    ttot = 0
+    if not Testing:
+        start_time = time.time()
+        
+    sprint(plan=True,Testing=Testing)
 
     if not Testing:
         ttot = time.time() - start_time
@@ -552,16 +567,18 @@ def ritual_ayuda(tipo, Testing=False):
     elif tipo == '3':
         revision_semanal(Testing=Testing)
     elif tipo == '4':
+        revision_sprint(Testing=Testing)
+    elif tipo == '5':
+        transicion(Testing=Testing)
+    elif tipo == '6':
         personalq = input('    - ¿Quieres hacer una revisión personal? (s/n)')
         personal = u.get_sn(personalq)
         if personal == 's':
             revision_trimestral_personal(Testing=Testing)
         else:
             revision_trimestral(Testing=Testing)
-    elif tipo == '5':
-        revision_anual(Testing=Testing)        
-    else:
-        transicion(Testing=Testing)
+    elif tipo == '7':
+        revision_anual(Testing=Testing)                
     return
 
 

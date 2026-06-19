@@ -424,6 +424,7 @@ def run_sesion_completa(session_type, str_mins,
     print(u.get_msg('block'),f'{0} ({hi.strftime("%H:%M")} -',
           f'{hf.strftime("%H:%M")}): {math.ceil(bloques[0])} min')
     iobj = preparar_siguiente_bloque(expected_start=hora_comienzo[0])
+
     for i, block_mins in enumerate(bloques):
         print(f'   \033[1;35m"{objetivo}"\033[0m')         
         t_tot_cumu += run_bloque_unico(iobj, block_mins, Testing=Testing)
@@ -431,8 +432,9 @@ def run_sesion_completa(session_type, str_mins,
         if i < (len(bloques) - 1):
             hi=hora_comienzo[i+1]
             hf=hora_fin[i+1]
+            mins_next = math.ceil(bloques[i+1])
             print(u.get_msg('block'),f'{i+1} ({hi.strftime("%H:%M")} -',
-                  f'{hf.strftime("%H:%M")}): {math.ceil(block_mins)} min')
+                  f'{hf.strftime("%H:%M")}): {mins_next} min')
             iobj = preparar_siguiente_bloque(expected_start=hora_comienzo[i+1])
             
             next_block_start = hora_comienzo[i+1]
@@ -444,7 +446,6 @@ def run_sesion_completa(session_type, str_mins,
                 t_tot_cumu += rest_block(mbreak, Testing=Testing)
             elif available_break < 0:
                 print(u.get_msg('delay_msg'))    
-        if Testing: break
     return t_tot_cumu, objetivo
 
 
