@@ -8,18 +8,18 @@ tt = min_refl
 t2 = tt*2.
 t_half = tt/2.
 
-rem = [' - Muéveta a diario: (~6000 pasos + 20min de ej.) o ~10000 pasos. \n',
-       ' - Por las noches, haz más actividades sin pantallas, como dibujar. \n',
-       ' - Rutina de sueño: 7:00 arriba y 23:00 en la cama. \n',
-       ' - Da un paseo de unos 15min después de comer y cenar.\n',
-       ' - No mires pantallas en la cama. \n',
-       ' - Designa tiempos para leer mensajes potencialmente peligrosos. \n',
-       ' - Haz yoga de forma regular. \n',
-       ' - Genera unos planes semanales y diarios bien desmigajados. \n',
-       ' - Cada semana, dedica tiempo a tu proyecto. \n',
-       ' - Conéctate con tus por qué al escribirlos a diario. \n',
-       ' - Ten ratos de ocio en los que no haces nada. \n',
-       ' - Juega más, también con tus proyectos y actividades diarias. \n']
+rem = [' - Muéveta a diario: (~6000 pasos + 20min de ej.) o ~10000 pasos. \n',    #0
+       ' - Por las noches, haz más actividades sin pantallas, como dibujar. \n',  #1
+       ' - Rutina de sueño: 7:00 arriba y 23:00 en la cama. \n',                  #2
+       ' - Da un paseo de unos 15min después de comer y cenar.\n',                #3
+       ' - No mires pantallas en la cama. \n',                                    #4
+       ' - Designa tiempos para leer mensajes potencialmente peligrosos. \n',     #5
+       ' - Haz yoga de forma regular. \n',                                        #6
+       ' - Genera unos planes semanales y diarios bien desmigajados. \n',         #7
+       ' - Cada semana, dedica tiempo a tu proyecto. \n',                         #8
+       ' - Conéctate con tus por qué al escribirlos a diario. \n',                #9
+       ' - Ten ratos de ocio en los que no haces nada. \n',                       #10
+       ' - Juega más, también con tus proyectos y actividades diarias. \n']       #11
 
 paliativo = ('  Toma distancia de tus pensamientos:\n'
              '  - Vete a un sitio tranquilo y haz 5 respiraciones lentas.\n'
@@ -45,8 +45,10 @@ def get_response(message, frase):
     elif frase == 3:
         print(rem[2], rem[0], rem[1])
     elif frase == 4:
-        print(rem[5], rem[3], rem[6], rem[10])
+        print(rem[9], rem[10], rem[11])
     elif frase == 5:
+        print(rem[5], rem[3], rem[6], rem[10])
+    elif frase == 6:
         print(rem[2], rem[1], rem[4])
     
     print(' * RECOMENDACIÓN:\n')
@@ -58,12 +60,13 @@ def get_type():
     print('  🤝 TIPO DE AYUDA que necesitas 🤝\n')
     print('  1) General')
     print('  2) Comenzar el día (~1 min)')
-    print('  3) Revisión semanal (~10 min)')
-    print('  4) Nuevo periodo para avanzar el proyecto (~10 min)')
-    print('  5) Transición (~ 10 min)')
-    print('  6) Revisión trimestral (~40 min)')
-    print('  7) Revisión anual (~1 h)')
-    ntipos = 7
+    print('  3) Cerrar el día (~1 min)')
+    print('  4) Revisión semanal (~10 min)')
+    print('  5) Nuevo periodo para avanzar el proyecto (~10 min)')
+    print('  6) Transición (~ 10 min)')
+    print('  7) Revisión trimestral (~40 min)')
+    print('  8) Revisión anual (~1 h)')
+    ntipos = 8
     tipo = input('\n   Elige una opción del 1 al '+str(ntipos)+': ')
     itipo = int(tipo)
     while itipo not in range(ntipos+1):
@@ -232,7 +235,18 @@ def comienzo(tt,Testing=False):
     ttot = u.treflexion(tt,unit='s',Testing=Testing)
     print('  ☕ ¿Hay algo que te podría ayudar hoy?\n')
     ttot = u.treflexion(tt,unit='s',Testing=Testing)
+    print('    Céntrate en cómo haces las cosas y no tanto en lo que tienes que hacer\n')
     print(lanza_vamos)
+    return
+
+
+def termino(tt,Testing=False):
+    print('\n  ✨ Celebra lo que has logrado hoy (tareas completadas, ayuda, etc).')
+    print('\n     Conecta con esa sensación de logro.\n')
+    ttot = u.treflexion(tt,unit='s',Testing=Testing)
+    print('  🐉 Sueña un momento sobre ¿cómo y dónde querrías verte en el futuro?\n')
+    ttot = u.treflexion(tt,unit='s',Testing=Testing)
+    print('     Recoge y prepara tu mesa para el próximo día\n')
     return
 
 
@@ -450,8 +464,9 @@ def ayuda_general(Testing=True):
     print("   1. No estoy haciendo lo que me he propuesto. \n")
     print("   2. Estoy agobiada, no me apetece y/o sé que no valgo para esto. \n")
     print("   3. No tengo energía. \n")
-    print("   4. Estoy sobrepasada emocionalmente. \n")
-    print("   5. Hoy he empezado más tarde de lo previsto. \n")
+    print("   4. No tengo ilusión. \n")
+    print("   5. Estoy sobrepasada emocionalmente. \n")
+    print("   6. Hoy he empezado más tarde de lo previsto. \n")
     
     frase = int(input("Número de la frase que mejor te describe hoy: "))
     print("\n")
@@ -519,6 +534,18 @@ def ayuda_general(Testing=True):
                     get_response(message, frase)
     
     elif frase == 4:
+        print(" 🥰 Agradece al menos 3 cosas relacionadas con el trabajo")
+        pasoq = input(' - ¿Lo tienes (s/n)?')
+        print(" 🐉 Piensa en el último día de trabajo y reflexiona sobre lo que conseguistes. Conecta con la sensación de logro.")
+        pasoq = input(' - ¿Lo tienes (s/n)?')
+        print(" 🧭 ¿Dónde te gustaría verte en el futuro?")
+        print("    ¿Qué pequeños pasos me pueden acercar a ese futuro?")
+        print("    ¿Cómo podrías disgrutar más del proceso?")
+        pasoq = input(' - ¿Lo tienes (s/n)?')
+        message = ('Céntrate en cómo haces las cosas.')
+        get_response(message, frase)
+    
+    elif frase == 5:
         tarde1 = input("¿Puedes designar un tiempo más tarde para analizar lo que te preocupa (s/n)?")
         tarde = u.get_sn(tarde1)
         if tarde == 's':
@@ -527,7 +554,7 @@ def ayuda_general(Testing=True):
         else:
             get_response(paliativo, frase)
     
-    elif frase == 5:
+    elif frase == 6:
         tarde1 = input("¿Más tarde de 1h (s/n)?")
         tarde = u.get_sn(tarde1)
         if tarde == 's':
@@ -565,19 +592,21 @@ def ritual_ayuda(tipo, Testing=False):
     elif tipo == '2':
         comienzo(s_respir,Testing=Testing)
     elif tipo == '3':
-        revision_semanal(Testing=Testing)
+        termino(s_respir,Testing=Testing)
     elif tipo == '4':
-        revision_sprint(Testing=Testing)
+        revision_semanal(Testing=Testing)
     elif tipo == '5':
-        transicion(Testing=Testing)
+        revision_sprint(Testing=Testing)
     elif tipo == '6':
+        transicion(Testing=Testing)
+    elif tipo == '7':
         personalq = input('    - ¿Quieres hacer una revisión personal? (s/n)')
         personal = u.get_sn(personalq)
         if personal == 's':
             revision_trimestral_personal(Testing=Testing)
         else:
             revision_trimestral(Testing=Testing)
-    elif tipo == '7':
+    elif tipo == '8':
         revision_anual(Testing=Testing)                
     return
 

@@ -104,11 +104,19 @@ def adjust_first_block(total_mins, minblock=14):
     if block0 > total_mins:
         block0 = total_mins
         
-    if total_mins - block0 >= mins_res0:
+    #if total_mins - block0 >= mins_res0:
+    #    remaining_mins = total_mins - block0 - int(mins_res0)
+    #else:
+    #    remaining_mins = 0
+    rr = total_mins - block0 - int(mins_res0)
+    if block0 < total_mins and rr < minblock:
+        block0 = total_mins
+        remaining_mins = 0
+    elif total_mins - block0 >= mins_res0:
         remaining_mins = total_mins - block0 - int(mins_res0)
     else:
         remaining_mins = 0
-
+    
     if Testing:
         print(f'  total_mins={total_mins:.1f}, initial rest={mins_res0}')
         print(f'  block0={block0}, remaining_mins={remaining_mins:.1f}')
@@ -378,8 +386,10 @@ def run_sesion_completa(session_type, str_mins,
     while t_resto > 0:
         # Calcular tamaño del siguiente bloque
         remaining_blocks = max(1, int(t_resto/twork))
-        next_block = min(mins_work, max(mins_work, t_resto/remaining_blocks))
-        next_block = min(next_block, t_resto - mins_rest)  # Dejar espacio para descanso
+        next_block = min(mins_work, max(minblockn,
+                                        t_resto/remaining_blocks))
+        # Dejar espacio para descanso
+        next_block = min(next_block, t_resto - mins_rest)  
         if next_block < minblockn:
             break
 
@@ -406,10 +416,12 @@ def run_sesion_completa(session_type, str_mins,
             print(f'DEBUG: Antes de ajustar -> bloques: {bloques}')
             print(f'DEBUG: Antes de ajustar -> hora_comienzo:',
                   f"{[h.strftime('%H:%M') for h in hora_comienzo]}")
-        bloques, hora_comienzo, hora_fin = adjust_last_block(bloques, hora_comienzo,
-                                                             hora_fin, str_mins,
-                                                             minblock=minblockn,
-                                                             max_block=twork+5)
+        bloques,hora_comienzo,hora_fin=adjust_last_block(bloques,
+                                                         hora_comienzo,
+                                                         hora_fin,
+                                                         str_mins,
+                                                         minblock=minblockn,
+                                                         max_block=twork+5)
     else:
         hora_fin.append(str_mins) 
 
@@ -477,7 +489,7 @@ def sesion():
     str_mins = input(u.get_msg('ask_duration'))
     firstmins = get_mins(str_mins)
     
-    threshold = mins_work #+ mins_rest
+    threshold = mins_work + mins_rest
     es_bloque = firstmins <= threshold
     if Testing:
         print(f'Hay {firstmins} min disponibles')

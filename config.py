@@ -10,7 +10,7 @@ mipgl = 'Pensar a lo grande, sacar el artículo de las líneas, escribir el cap�
 short_rest = False
 
 mins_work = 75.  # Minutes per work block
-mins_b_0  = 14.  # Shortest first block
+mins_b_0  = 15.  # Shortest first block
 mins_b_n  = 30.  # Shortest last block
 mins_rest = 15.  # Minutes to rest
 mins_res0 = 10.  # First rest
